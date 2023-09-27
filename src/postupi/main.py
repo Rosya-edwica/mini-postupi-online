@@ -105,7 +105,7 @@ class PostupiOnline:
     async def get_page_items(self, url: str) -> list[Tag]:
         html = await GetHTML(url)
         try:
-            page_items =  html.find("ul", class_="list-unstyled list-wrap").find_all("li", class_="list ")
+            page_items =  html.find("ul", class_="list-unstyled list-wrap").find_all("li", class_="list")
             return page_items
         except:
             print("НЕТ ЭЛЕМЕНТОВ:", url)
