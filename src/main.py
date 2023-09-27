@@ -26,7 +26,7 @@ async def main():
     await database.Connect()
 
     parser = PostupiOnline(database)
-    await parser.Run()
+    await parser.ScrapeVuz("https://volgograd.postupi.online/vuz/filial-miep-volgograd/")
 
     database.Close()
 
