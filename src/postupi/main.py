@@ -13,16 +13,21 @@ class PostupiOnline:
         self.MAIN_PAGE = "https://postupi.online/vuzi/"
         self.LEVEL_DOMAINS = ("bakalavr", "specialist", "magistratura")
         self.database = database
-        self.current_vuz_abbr: str
+        self.current_vuz_abbr: str # Индефикатор текущего вуза, чьи специализации и программы парсятся в данный момент. Нужен для проставления связи в БД
 
     async def Run(self):
         pages_count = await self.get_pages_count(self.MAIN_PAGE)
         for page in range(1, pages_count+1):
+
+            # Парсим все страницы главной страницы с вузами 
             await self.ScrapePage(url=f"{self.MAIN_PAGE}?page_num={page}")
+
 
     async def ScrapePage(self, url: str):
         page_items = await self.get_page_items(url)
         for item in page_items:
+
+            # Парсим конкретный вуз со страницы
             vuz_url = item.find("h2", class_="list__h").find("a")["href"]
             await self.ScrapeVuz(vuz_url)
 
@@ -39,6 +44,7 @@ class PostupiOnline:
     
 
     async def ScrapeVuzSpecializations(self, vuz_url: str):
+        # Парсим специализации вуза по уровням
         for domain in self.LEVEL_DOMAINS:
             url = f"{vuz_url}/specialnosti/{domain}"
             pages_count = await self.get_pages_count(url)
@@ -67,7 +73,9 @@ class PostupiOnline:
     
     async def ScrapeSpecializationPrograms(self, spec_url: str):
         program_items =  await self.get_page_items(spec_url)
-        spec_code = spec_url.split("/")[-2]
+        spec_code = spec_url.split("/")[-2] # Код специализации, который пригодится при сохранении программы
+
+        # Парсим все программы одной специализации асинхронно
         tasks = [asyncio.create_task(
             self.ScrapeProgram(url=item.find("h2").find("a")["href"], spec_code=spec_code)) 
             for item in program_items]
@@ -77,7 +85,7 @@ class PostupiOnline:
 
     async def ScrapeProgram(self, url: str, spec_code: str) -> Program:
         html = await GetHTML(url)
-        header = GetProgramHeader(html, url)
+        header = GetProgramHeader(html, url) 
         details = GetProgramDetails(html)
         program = Program(
             Url=url,
@@ -96,6 +104,7 @@ class PostupiOnline:
         return program    
     
     async def get_pages_count(self, url: str) -> int:
+        """Считаем количество страниц вузов и специализаций"""
         html = await GetHTML(url)
         try:
             return int(html.find_all("a", class_="paginator")[-1].text)
@@ -103,6 +112,7 @@ class PostupiOnline:
             return 1
     
     async def get_page_items(self, url: str) -> list[Tag]:
+        """Собираем уникальные элементы на странице: вузы/специализации/программы"""
         html = await GetHTML(url)
         try:
             page_items =  html.find("ul", class_="list-unstyled list-wrap").find_all("li", class_="list")

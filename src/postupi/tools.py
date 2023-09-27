@@ -9,24 +9,29 @@ from models import ProgramHeader, ProgramDetails
 
 
 async def GetHTML(url: str, headers: dict = None) -> BeautifulSoup:
+    """Метод для асинхронных request-запросов"""
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers=headers) as response:
             return BeautifulSoup(await response.text(), "lxml")
 
 
 def UniqueListItems(data: list) -> list:
+        """Оставляем только уникальные элементы в списке"""
         unique = []
         for i in data:
             if i not in unique:
                 unique.append(i)
         return unique
 
+
 def GetProgramSubjects(html: Tag) -> list[str]:
+    """Получаем список предметов ЕГЭ для бакалавров и специалистов и список экзаменов для магистров"""
     ege_subjects =  html.find("div", class_="score-box swiper-slide 0")
     if ege_subjects:
             return [re.sub(r"\xa0|другие", " ", subject.text).replace("или ", "/").replace("/ ", "")
                         for subject in ege_subjects.find_all("div", class_="score-box__item")]
 
+    # Для магистров
     exams = html.find_all("div", class_="score-box__inner")
     subjects = []
     for item in exams:
@@ -34,7 +39,9 @@ def GetProgramSubjects(html: Tag) -> list[str]:
                 subjects.append(exam.text)
     return subjects
 
+
 def GetProgramDetails(html: Tag) -> ProgramDetails:
+    """Собираем уровень образования и форму обучения из блока Детали"""
     section_items = html.find_all("div", class_="detail-box__item")
     for item in section_items:
         text = item.text.strip().replace("\n", "")
@@ -46,6 +53,7 @@ def GetProgramDetails(html: Tag) -> ProgramDetails:
 
 
 def GetProgramHeader(html: Tag, url) -> ProgramHeader:
+    """Собираем стоимость обучения, количество платных и бюджетных мест, продолжительность обучения в месяцах"""
     cost, free_places, payment_places, duration_in_months = 0, 0, 0, 0
     header_items = html.find("ul", class_="bg-nd__cnt bg-nd-cnt swiper-wrapper").find_all("li")
 
@@ -73,6 +81,7 @@ def GetProgramHeader(html: Tag, url) -> ProgramHeader:
 
 
 def DurationToMonths(text: str) -> int:
+    """Конвертируем это '3 года и 3 мес.' в это '39'(месяцев)"""
     months = 0
     years = re.findall("\d+ год|\d+ лет", text)
     if years:

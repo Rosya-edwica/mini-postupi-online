@@ -71,6 +71,8 @@ class Database:
 
     
     async def getVuzIdByAbbr(self, abbr: str) -> int:
+        """Метод для того, чтобы проставить связь между специализацией и конкретным вузом"""
+
         query = f"SELECT id FROM short_vuz WHERE abbr = '{abbr}'"
         connection = self.GetConnection()
         async with connection.cursor() as cursor:
@@ -79,6 +81,8 @@ class Database:
         return res[0]
     
     async def getSpecIdByAbbrAndCode(self, abbr: str, code: str) -> int:
+        """Метод для того, чтобы проставить связь между программой и специализацией конкретного вуза"""
+
         query = f"""
             SELECT short_specialization.id 
             FROM short_specialization
