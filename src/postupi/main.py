@@ -19,14 +19,12 @@ class PostupiOnline:
         pages_count = await self.get_pages_count(self.MAIN_PAGE)
         for page in range(1, pages_count+1):
             await self.ScrapePage(url=f"{self.MAIN_PAGE}?page_num={page}")
-            break
 
     async def ScrapePage(self, url: str):
         page_items = await self.get_page_items(url)
         for item in page_items:
             vuz_url = item.find("h2", class_="list__h").find("a")["href"]
             await self.ScrapeVuz(vuz_url)
-            break
 
     async def ScrapeVuz(self, url: str):
         html = await GetHTML(url)
